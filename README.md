@@ -1,10 +1,20 @@
-# GeoGuessr Bot
+# AutoGuessr
 
 An Electron-based desktop application for automating GeoGuessr gameplay with an intuitive user interface, real-time progress tracking, and customizable settings.
 
-<div align="center">
-  <img src="./preview/autoguessr_2.png" alt="Map Selection" width="800"/>
-  <p><em>Map Selection with Search and Visual Previews</em></p>
+<div align="center" style="display: flex; justify-content: space-between; gap: 10px;">
+  <div>
+    <img src="./preview/autoguessr_2.png" alt="Map Selection" width="260"/>
+    <p><em>Map Selection</em></p>
+  </div>
+  <div>
+    <img src="./preview/autoguessr_1.png" alt="Progress Dashboard" width="260"/>
+    <p><em>Progress Dashboard</em></p>
+  </div>
+  <div>
+    <img src="./preview/autoguessr_3.png" alt="Settings Panel" width="260"/>
+    <p><em>Settings Panel</em></p>
+  </div>
 </div>
 
 ## Features
@@ -15,22 +25,12 @@ An Electron-based desktop application for automating GeoGuessr gameplay with an 
 - Quick search functionality
 - Country flags for easy identification
 
-<div align="center">
-  <img src="./preview/autoguessr_1.png" alt="Progress Dashboard" width="800"/>
-  <p><em>Live Progress Dashboard with XP Tracking</em></p>
-</div>
-
 ### 📊 Live Progress Dashboard
 - Games completed counter
 - Total XP tracking
 - Level progression system
 - Real-time game logs
 - Color-coded status updates
-
-<div align="center">
-  <img src="./preview/autoguessr_3.png" alt="Settings Panel" width="800"/>
-  <p><em>Customizable Settings Panel</em></p>
-</div>
 
 ### ⚙️ Customizable Settings
 - Account management
