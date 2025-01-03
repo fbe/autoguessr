@@ -1,20 +1,27 @@
-# AutoGuessr
+# GeoGuessr Bot
 
 An Electron-based desktop application for automating GeoGuessr gameplay with an intuitive user interface, real-time progress tracking, and customizable settings.
 
-<div align="center" style="display: flex; justify-content: space-between; gap: 10px;">
-  <div>
-    <img src="./preview/autoguessr_2.png" alt="Map Selection" width="260"/>
-    <p><em>Map Selection</em></p>
-  </div>
-  <div>
-    <img src="./preview/autoguessr_1.png" alt="Progress Dashboard" width="260"/>
-    <p><em>Progress Dashboard</em></p>
-  </div>
-  <div>
-    <img src="./preview/autoguessr_3.png" alt="Settings Panel" width="260"/>
-    <p><em>Settings Panel</em></p>
-  </div>
+<div align="center">
+<table>
+<tr>
+<td align="center">
+<img src="./preview/autoguessr_2.png" alt="Map Selection" width="280"/>
+<br>
+<em>Map Selection</em>
+</td>
+<td align="center">
+<img src="./preview/autoguessr_1.png" alt="Progress Dashboard" width="280"/>
+<br>
+<em>Progress Dashboard</em>
+</td>
+<td align="center">
+<img src="./preview/autoguessr_3.png" alt="Settings Panel" width="280"/>
+<br>
+<em>Settings Panel</em>
+</td>
+</tr>
+</table>
 </div>
 
 ## Features
