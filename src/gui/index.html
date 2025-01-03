@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GeoGuessr Bot</title>
+    <style>
+        :root {
+            /* Modern color palette */
+            --primary: #1a1c23;
+            --secondary: #22242c;
+            --accent: #6366f1;
+            --accent-hover: #818cf8;
+            --success: #34d399;
+            --warning: #fbbf24;
+            --error: #f87171;
+            --text: #f1f5f9;
+            --text-secondary: #94a3b8;
+            
+            /* Gradients */
+            --gradient-primary: linear-gradient(135deg, rgba(30, 27, 75, 0.8) 0%, rgba(26, 28, 35, 0.8) 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                /* Smaller stars */
+                radial-gradient(1.5px 1.5px at 10% 30%, rgba(255, 255, 255, 1), transparent 100%),
+                radial-gradient(2px 2px at 25% 45%, rgba(255, 255, 255, 1), transparent 100%),
+                radial-gradient(1.5px 1.5px at 40% 20%, rgba(255, 255, 255, 1), transparent 100%),
+                radial-gradient(1px 1px at 55% 70%, rgba(255, 255, 255, 1), transparent 100%),
+                radial-gradient(2px 2px at 70% 35%, rgba(255, 255, 255, 1), transparent 100%),
+                radial-gradient(1.5px 1.5px at 85% 60%, rgba(255, 255, 255, 1), transparent 100%),
+                /* Globe background - try different paths */
+                url('../../assets/globe.webp'),
+                var(--gradient-primary);
+            background-size: 
+                150px 150px,
+                200px 200px,
+                175px 175px,
+                225px 225px,
+                180px 180px,
+                190px 190px,
+                400px auto,  /* Smaller globe */
+                100% 100%;
+            background-position:
+                0 0,
+                0 0,
+                0 0,
+                0 0,
+                0 0,
+                0 0,
+                center,
+                0 0;
+            background-repeat: 
+                repeat,
+                repeat,
+                repeat,
+                repeat,
+                repeat,
+                repeat,
+                no-repeat,
+                repeat;
+            animation: stars 60s linear infinite;
+        }
+
+        @keyframes stars {
+            to {
+                background-position: 
+                    150px 150px,
+                    200px 200px,
+                    175px -175px,
+                    -225px 225px,
+                    180px -180px,
+                    190px 190px,
+                    center,
+                    0 0;
+            }
+        }
+
+        .app-container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: transparent;
+        }
+
+        .navbar {
+            background: var(--secondary);
+            height: 48px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 24px;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--accent);
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .logo-text {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .nav-items {
+            display: flex;
+            gap: 4px;
+        }
+
+        .nav-item {
+            padding: 6px 12px;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            height: calc(100vh - 48px);
+            overflow: hidden;
+            padding: 16px;
+            background: transparent;
+        }
+
+        .dashboard-grid {
+            flex-shrink: 0;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: var(--secondary);
+            border-radius: 16px;
+            padding: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        .stat-value {
+            font-size: 30px;
+            font-weight: 600;
+            color: var(--text);
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        .log-container {
+            flex: 1;
+            background: var(--secondary);
+            border-radius: 16px;
+            padding: 8px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            line-height: 1.2;
+        }
+
+        .log-line {
+            padding: 2px 12px;
+            border-radius: 4px;
+            margin-bottom: 1px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .log-success { color: var(--success); }
+        .log-warning { color: var(--warning); }
+        .log-error { color: var(--error); }
+        .log-info { color: var(--text-secondary); }
+        .log-xp { color: var(--accent); }
+
+        /* Add smooth scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Make the font awesome icons slightly smaller */
+        .nav-item i {
+            font-size: 12px;
+        }
+
+        /* Base tab content styles */
+        .tab-content {
+            display: none;
+            height: calc(100vh - 80px);
+        }
+
+        /* Dashboard specific */
+        #dashboard.active {
+            display: flex !important;
+            flex-direction: column;
+            gap: 16px;
+            height: calc(100vh - 80px);
+        }
+
+        /* Maps specific */
+        #maps.active {
+            display: flex !important;
+            flex-direction: column;
+            height: calc(100vh - 80px);
+        }
+
+        /* Settings specific */
+        #settings.active {
+            display: flex !important;
+            height: calc(100vh - 80px);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .map-search {
+            padding: 16px;
+            background: var(--secondary);
+            border-radius: 16px 16px 0 0;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: none;
+            flex-shrink: 0;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 16px;
+            background: var(--primary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .maps-grid {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: var(--secondary);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: none;
+            border-radius: 0 0 16px 16px;
+        }
+
+        .maps-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            align-content: start;
+            grid-auto-rows: min-content;
+        }
+
+        .map-item {
+            background-size: cover;
+            background-position: center;
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+            height: 64px;
+            min-height: 64px;
+            max-height: 64px;
+        }
+
+        .map-item::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            background: linear-gradient(
+                to bottom,
+                rgba(26, 28, 35, 0.5),
+                rgba(26, 28, 35, 0.6)
+            );
+            z-index: 1;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .map-item > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .map-item:hover::before {
+            background: linear-gradient(
+                to bottom,
+                rgba(26, 28, 35, 0.4),
+                rgba(26, 28, 35, 0.5)
+            );
+        }
+
+        .map-flag {
+            min-width: 28px;
+            height: 28px;
+            background: rgba(26, 28, 35, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: var(--text);
+            text-transform: uppercase;
+            padding: 0 4px;
+        }
+
+        .map-name {
+            font-weight: 500;
+            color: var(--text);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .map-item.selected::before {
+            border-color: var(--accent);
+            background: linear-gradient(
+                to bottom,
+                rgba(99, 102, 241, 0.25),
+                rgba(26, 28, 35, 0.6)
+            );
+        }
+
+        .map-item.selected .map-flag {
+            background: var(--accent);
+        }
+
+        /* Add progress bar styling */
+        .progress-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            height: 6px;
+            margin-top: 12px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 8px;
+            transition: width 0.3s ease;
+        }
+
+        .level-info {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .level-progress {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .level-progress-nav {
+            flex: 0 1 400px;
+            margin: 0 0 0 auto;
+            display: flex;
+            align-items: center;
+            height: 24px;
+            transform: translateY(-3.5px);
+        }
+
+        .level-progress-nav .level-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+            height: 100%;
+            justify-content: flex-end;
+        }
+
+        .level-progress-nav .progress-container {
+            flex: 1;
+            max-width: 300px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            position: relative;
+            margin: 0;
+            transform: translateY(-1px);
+        }
+
+        .level-progress-nav .progress-text {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            line-height: 1;
+        }
+
+        /* Hide real data initially */
+        .level-progress-nav .hidden {
+            display: none;
+        }
+
+        /* When we get data, hide placeholder and show real data */
+        .level-progress-nav.has-data .placeholder-text {
+            display: none;
+        }
+
+        .level-progress-nav.has-data .hidden {
+            display: inline;
+        }
+
+        .level-progress-nav #currentLevel {
+            order: 2;
+            transform: scale(0.8);
+            transition: transform 0.5s ease;
+        }
+
+        .level-progress-nav.visible #currentLevel {
+            transform: scale(1);
+        }
+
+        .level-progress-nav .progress-bar {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 10px;
+            transition: width 0.8s ease, transform 0.5s ease;
+            transform: scaleX(0.9);
+            transform-origin: left;
+        }
+
+        .level-progress-nav.visible .progress-bar {
+            transform: scaleX(1);
+        }
+
+        .level-progress-nav .progress-container {
+            flex: 1;
+            height: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            position: relative;
+            margin: 0;
+        }
+
+        .level-progress-nav .progress-bar {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        /* Add text container inside progress bar */
+        .level-progress-nav .progress-text {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+            font-size: 11px;
+            font-weight: 500;
+            z-index: 1;
+        }
+
+        .level-progress-nav .level-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .level-progress-nav .level-progress {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .left-section {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .level-progress-nav {
+            margin-left: auto;
+        }
+
+        /* Tier border styles */
+        .level-tier {
+            position: absolute;
+            top: -14px;
+            left: -14px;
+            right: -14px;
+            bottom: -14px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Define tier borders - add all your tier images */
+        .tier-10 { background-image: url('file:///assets/tiers/tier-10.webp'); }
+        .tier-20 { background-image: url('file:///assets/tiers/tier-20.webp'); }
+        .tier-30 { background-image: url('file:///assets/tiers/tier-30.webp'); }
+        .tier-40 { background-image: url('file:///assets/tiers/tier-40.webp'); }
+        .tier-50 { background-image: url('file:///assets/tiers/tier-50.webp'); }
+        .tier-60 { background-image: url('file:///assets/tiers/tier-60.webp'); }
+        .tier-70 { background-image: url('file:///assets/tiers/tier-70.webp'); }
+        .tier-80 { background-image: url('file:///assets/tiers/tier-80.webp'); }
+        .tier-90 { background-image: url('file:///assets/tiers/tier-90.webp'); }
+        .tier-100 { background-image: url('file:///assets/tiers/tier-100.webp'); }
+        .tier-110 { background-image: url('file:///assets/tiers/tier-110.webp'); }
+        .tier-120 { background-image: url('file:///assets/tiers/tier-120.webp'); }
+        .tier-130 { background-image: url('file:///assets/tiers/tier-130.webp'); }
+        .tier-140 { background-image: url('file:///assets/tiers/tier-140.webp'); }
+        .tier-150 { background-image: url('file:///assets/tiers/tier-150.webp'); }
+        .tier-160 { background-image: url('file:///assets/tiers/tier-160.webp'); }
+        .tier-170 { background-image: url('file:///assets/tiers/tier-170.webp'); }
+        .tier-180 { background-image: url('file:///assets/tiers/tier-180.webp'); }
+        .tier-190 { background-image: url('file:///assets/tiers/tier-190.webp'); }
+        .tier-200 { background-image: url('file:///assets/tiers/tier-200.webp'); }
+
+        /* Make level progress nav initially invisible */
+        .level-progress-nav {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Show when has-data class is added */
+        .level-progress-nav.has-data {
+            opacity: 1;
+        }
+
+        /* Optional: Add hover effect */
+        .stat-card:hover {
+            background: var(--secondary);
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Settings page styling */
+        .settings-container {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--secondary);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        /* Add the same scrollbar styling as other containers */
+        .settings-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .settings-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .settings-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .settings-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .setting-group h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--primary);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .setting-label {
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        /* Input styling */
+        .setting-control {
+            background: var(--secondary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 8px 12px;
+            font-size: 14px;
+            font-family: 'Inter', -apple-system, sans-serif;
+            transition: all 0.2s;
+        }
+
+        /* Number input specific styles */
+        input[type="number"].setting-control {
+            width: 120px;
+        }
+
+        /* Text/email/password input specific styles */
+        input[type="text"].setting-control,
+        input[type="email"].setting-control,
+        input[type="password"].setting-control {
+            width: 250px;
+        }
+
+        /* Checkbox styling */
+        input[type="checkbox"].setting-control {
+            appearance: none;
+            width: 40px;
+            height: 24px;
+            background: var(--secondary);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0;
+        }
+
+        input[type="checkbox"].setting-control::before {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            top: 3px;
+            left: 4px;
+            transition: all 0.2s;
+        }
+
+        input[type="checkbox"].setting-control:checked {
+            background: var(--accent);
+        }
+
+        input[type="checkbox"].setting-control:checked::before {
+            background: white;
+            left: 20px;
+        }
+
+        /* Focus states */
+        .setting-control:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Log container */
+        .log-container {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        /* Update level circle styling */
+        #currentLevel {
+            width: 48px;
+            height: 48px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-left: 12px;
+            z-index: 1;
+            transform: translateY(-1px);
+        }
+
+        .level-number {
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Update tier border size */
+        .level-tier {
+            position: absolute;
+            top: -14px;
+            left: -14px;
+            right: -14px;
+            bottom: -14px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Adjust progress bar spacing */
+        .level-progress-nav .level-info {
+            gap: 16px;
+        }
+
+        /* Button styling */
+        .setting-button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .setting-button.danger {
+            background: var(--error);
+            color: white;
+        }
+
+        .setting-button.danger:hover {
+            background: #ef4444;
+        }
+
+        /* Hide GeoGuessr icon in navbar */
+        .game-header_logo__Qj_j1,
+        .game-header_logoMobile__Yh4Aq {
+            display: none !important;
+        }
+
+        /* Make containers more transparent to see stars better */
+        .navbar,
+        .stat-card,
+        .settings-container,
+        .map-search,
+        .maps-grid,
+        .log-container {
+            background: rgba(34, 36, 44, 0.6);
+            backdrop-filter: blur(8px);
+        }
+
+        .logo-text,
+        .nav-item.active,
+        .progress-bar {
+            text-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="background-container"></div>
+    <div class="app-container">
+        <nav class="navbar">
+            <div class="left-section">
+                <div class="logo">
+                    <span class="logo-text">AutoGuessr</span>
+                </div>
+                
+                <div class="nav-items">
+                    <a class="nav-item active" data-tab="dashboard" title="Dashboard">
+                        <i class="fas fa-chart-line"></i>
+                    </a>
+                    <a class="nav-item" data-tab="maps" title="Maps">
+                        <i class="fas fa-map-marked-alt"></i>
+                    </a>
+                    <a class="nav-item" data-tab="settings" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="level-progress-nav">
+                <div class="level-info">
+                    <div class="progress-container">
+                        <div class="progress-bar" id="levelProgressBar"></div>
+                        <div class="progress-text">
+                            <span id="levelProgress">0 / 0</span>
+                        </div>
+                    </div>
+                    <div id="currentLevel">
+                        <span class="level-number">0</span>
+                        <div class="level-tier"></div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <!-- Dashboard Tab -->
+            <div class="tab-content active" id="dashboard">
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Games Played</div>
+                        <div class="stat-value" id="gamesCount">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total XP</div>
+                        <div class="stat-value" id="totalXP">0</div>
+                    </div>
+                </div>
+                <div class="log-container" id="statusText"></div>
+            </div>
+
+            <!-- Maps Tab -->
+            <div class="tab-content" id="maps">
+                <div class="map-search">
+                    <input type="text" class="search-input" placeholder="Search maps..." id="mapSearch">
+                </div>
+                <div class="maps-grid">
+                    <div class="maps-wrapper" id="mapList">
+                        <!-- Maps will be populated here by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content" id="settings">
+                <div class="settings-container">
+                    <div class="setting-group">
+                        <h3>Game Settings</h3>
+                        <div class="setting-item">
+                            <div class="setting-label">Use Fixed Coordinates</div>
+                            <input type="checkbox" class="setting-control" id="useFixedCoords" checked>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-label">Min Distance (meters)</div>
+                            <input type="number" class="setting-control" id="minDistance" value="5000" min="0" step="1000">
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-label">Max Distance (meters)</div>
+                            <input type="number" class="setting-control" id="maxDistance" value="200000" min="0" step="1000">
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h3>Account</h3>
+                        <div class="setting-item">
+                            <div class="setting-label">Email</div>
+                            <input type="email" class="setting-control" id="email" placeholder="Enter your email">
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-label">Password</div>
+                            <input type="password" class="setting-control" id="password" placeholder="Enter your password">
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <h3>Session</h3>
+                        <div class="setting-item">
+                            <div class="setting-label">Delete saved session data</div>
+                            <button class="setting-button danger" id="deleteSession">Delete Session</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="renderer.js"></script>
+</body>
+</html> 
