@@ -1,4 +1,4 @@
-# GeoGuessr Bot
+# GeoGuessr Bot [RELEASE]
 
 An Electron-based desktop application for automating GeoGuessr gameplay with an intuitive user interface, real-time progress tracking, and customizable settings.
 
